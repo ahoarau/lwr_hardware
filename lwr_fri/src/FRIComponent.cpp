@@ -156,12 +156,12 @@ private:
       cartPos.p.y(m_msr_data.data.msrCartPos[7]);
       cartPos.p.z(m_msr_data.data.msrCartPos[11]);
       cartPos = baseFrame * cartPos;
-      tf::PoseKDLToMsg(cartPos, cart_pos);
+      tf::poseKDLToMsg(cartPos, cart_pos);
 
       v = KDL::diff(T_old, cartPos, m_msr_data.intf.desiredMsrSampleTime);
       v = cartPos.M.Inverse() * v;
       T_old = cartPos;
-      tf::TwistKDLToMsg(v, cart_twist);
+      tf::twistKDLToMsg(v, cart_twist);
 
       cart_wrench.force.x = m_msr_data.data.estExtTcpFT[0];
       cart_wrench.force.y = m_msr_data.data.estExtTcpFT[1];
