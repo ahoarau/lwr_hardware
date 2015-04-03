@@ -131,9 +131,11 @@ private:
       baseFrame.M = KDL::Rotation::RPY(m_msr_data.krl.realData[3] * M_PI / 180.0,
               m_msr_data.krl.realData[4] * M_PI / 180.0,
               m_msr_data.krl.realData[5] * M_PI / 180.0);
-      baseFrame.p = KDL::Vector(m_msr_data.krl.realData[0] / 1000.0,
-              m_msr_data.krl.realData[1] / 1000.0,
-              m_msr_data.krl.realData[2] / 1000.0);
+
+      for(unsigned int i=0; i<3; ++i)
+        baseframe_vector[i] = m_msr_data.krl.realData[i] / 1000.0;
+
+      baseFrame.p = baseframe_vector;
 
       // Fill in fri_joint_state and joint_state
       for (unsigned int i = 0; i < LBR_MNJ; i++) {
@@ -149,6 +151,7 @@ private:
           m_msr_data.data.msrCartPos[4], m_msr_data.data.msrCartPos[5],
           m_msr_data.data.msrCartPos[6], m_msr_data.data.msrCartPos[8],
           m_msr_data.data.msrCartPos[9], m_msr_data.data.msrCartPos[10]);
+
       cartPos.p.x(m_msr_data.data.msrCartPos[3]);
       cartPos.p.y(m_msr_data.data.msrCartPos[7]);
       cartPos.p.z(m_msr_data.data.msrCartPos[11]);
@@ -396,6 +399,8 @@ private:
   KDL::Frame cartPos;
   KDL::Rotation rot;
   KDL::Frame baseFrame;
+  KDL::Vector baseframe_vector;
+  KDL::Rotation baseframe_rotation;
   std_msgs::Int32 x;
   KDL::Jacobian jac;
   KDL::Twist v;
