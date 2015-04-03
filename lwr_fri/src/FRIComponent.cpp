@@ -43,7 +43,6 @@
 #include <rtdm/rtdm.h>
 #endif
 
-typedef Eigen::Matrix<double, 7, 7> Matrix77d;
 // End of user code
 
 class FRIComponent : public RTT::TaskContext {
@@ -81,20 +80,22 @@ public:
 
   bool configureHook() {
     // Start of user code configureHook
-    jnt_pos_.resize(LBR_MNJ);
-    jnt_pos_old_.resize(LBR_MNJ);
-    jnt_vel_.resize(LBR_MNJ);
-    jnt_trq_.resize(LBR_MNJ);
-    grav_trq_.resize(LBR_MNJ);
-    jnt_pos_cmd_.resize(LBR_MNJ);
-    jnt_trq_cmd_.resize(LBR_MNJ);
-    jac_.resize(LBR_MNJ);
+    jnt_pos.resize(LBR_MNJ);
+    jnt_pos_old.resize(LBR_MNJ);
+    jnt_vel.resize(LBR_MNJ);
+    jnt_trq.resize(LBR_MNJ);
+    grav_trq.resize(LBR_MNJ);
+    jnt_pos_cmd.resize(LBR_MNJ);
+    jnt_trq_cmd.resize(LBR_MNJ);
+    jac.resize(LBR_MNJ);
+    mass.resize(LBR_MNJ,LBR_MNJ);
 
-    port_JointPosition.setDataSample(jnt_pos_);
-    port_JointVelocity.setDataSample(jnt_vel_);
-    port_JointTorque.setDataSample(jnt_trq_);
-    port_GravityTorque.setDataSample(grav_trq_);
-    port_Jacobian.setDataSample(jac_);
+    port_JointPosition.setDataSample(jnt_pos);
+    port_JointVelocity.setDataSample(jnt_vel);
+    port_JointTorque.setDataSample(jnt_trq);
+    port_GravityTorque.setDataSample(grav_trq);
+    port_Jacobian.setDataSample(jac);
+    port_MassMatrix.setDataSample(mass);
 
     if (fri_create_socket() != 0)
       return false;
@@ -124,35 +125,25 @@ private:
   void doComm() {
     // Start of user code Comm
 
-    geometry_msgs::Pose cart_pos, cart_pos_cmd;
-    geometry_msgs::Wrench cart_wrench, cart_wrench_cmd;
-    geometry_msgs::Twist cart_twist;
-    Matrix77d mass;
-    lwr_fri::FriJointImpedance jnt_imp_cmd;
-    lwr_fri::CartesianImpedance cart_imp_cmd;
-
     //Read:
     if (fri_recv() == 0) {
 
-      KDL::Frame baseFrame(
-          KDL::Rotation::RPY(m_msr_data.krl.realData[3] * M_PI / 180.0,
+      baseFrame.M = KDL::Rotation::RPY(m_msr_data.krl.realData[3] * M_PI / 180.0,
               m_msr_data.krl.realData[4] * M_PI / 180.0,
-              m_msr_data.krl.realData[5] * M_PI / 180.0),
-          KDL::Vector(m_msr_data.krl.realData[0] / 1000.0,
+              m_msr_data.krl.realData[5] * M_PI / 180.0);
+      baseFrame.p = KDL::Vector(m_msr_data.krl.realData[0] / 1000.0,
               m_msr_data.krl.realData[1] / 1000.0,
-              m_msr_data.krl.realData[2] / 1000.0));
+              m_msr_data.krl.realData[2] / 1000.0);
 
       // Fill in fri_joint_state and joint_state
       for (unsigned int i = 0; i < LBR_MNJ; i++) {
-        grav_trq_[i] = m_msr_data.data.gravity[i];
-        jnt_trq_[i] = m_msr_data.data.estExtJntTrq[i];
-        jnt_pos_[i] = m_msr_data.data.msrJntPos[i] + prop_joint_offset[i];
-        jnt_vel_[i] = (jnt_pos_[i] - jnt_pos_old_[i]) / m_msr_data.intf.desiredMsrSampleTime;
-        jnt_pos_old_[i] = jnt_pos_[i];
+        grav_trq[i] = m_msr_data.data.gravity[i];
+        jnt_trq[i] = m_msr_data.data.estExtJntTrq[i];
+        jnt_pos[i] = m_msr_data.data.msrJntPos[i] + prop_joint_offset[i];
+        jnt_vel[i] = (jnt_pos[i] - jnt_pos_old[i]) / m_msr_data.intf.desiredMsrSampleTime;
+        jnt_pos_old[i] = jnt_pos[i];
       }
 
-      geometry_msgs::Quaternion quat;
-      KDL::Frame cartPos;
       cartPos.M = KDL::Rotation(m_msr_data.data.msrCartPos[0],
           m_msr_data.data.msrCartPos[1], m_msr_data.data.msrCartPos[2],
           m_msr_data.data.msrCartPos[4], m_msr_data.data.msrCartPos[5],
@@ -164,7 +155,7 @@ private:
       cartPos = baseFrame * cartPos;
       tf::PoseKDLToMsg(cartPos, cart_pos);
 
-      KDL::Twist v = KDL::diff(T_old, cartPos, m_msr_data.intf.desiredMsrSampleTime);
+      v = KDL::diff(T_old, cartPos, m_msr_data.intf.desiredMsrSampleTime);
       v = cartPos.M.Inverse() * v;
       T_old = cartPos;
       tf::TwistKDLToMsg(v, cart_twist);
@@ -178,9 +169,9 @@ private:
 
       for (int i = 0; i < FRI_CART_VEC; i++)
         for (int j = 0; j < LBR_MNJ; j++)
-          jac_(i, j) = m_msr_data.data.jacobian[i * LBR_MNJ + j];
+          jac(i, j) = m_msr_data.data.jacobian[i * LBR_MNJ + j];
       //Kuka uses Tx, Ty, Tz, Rz, Ry, Rx convention, so we need to swap Rz and Rx
-      jac_.data.row(3).swap(jac_.data.row(5));
+      jac.data.row(3).swap(jac.data.row(5));
 
       for (unsigned int i = 0; i < LBR_MNJ; i++) {
         for (unsigned int j = 0; j < LBR_MNJ; j++) {
@@ -197,7 +188,6 @@ private:
       //Process KRL CMD
 
       if (!(m_msr_data.krl.boolData & (1 << 0))) {
-        std_msgs::Int32 x;
         if (port_KRL_CMD.read(x) == RTT::NewData) {
           m_cmd_data.krl.intData[0] = x.data;
           m_cmd_data.krl.boolData |= (1 << 0);
@@ -260,10 +250,10 @@ private:
         if (m_msr_data.robot.control == FRI_CTRL_POSITION
             || m_msr_data.robot.control == FRI_CTRL_JNT_IMP) {
           //Read desired positions
-          if (port_JointPositionCommand.read(jnt_pos_cmd_) == RTT::NewData) {
-            if (jnt_pos_cmd_.size() == LBR_MNJ) {
+          if (port_JointPositionCommand.read(jnt_pos_cmd) == RTT::NewData) {
+            if (jnt_pos_cmd.size() == LBR_MNJ) {
               for (unsigned int i = 0; i < LBR_MNJ; i++)
-                m_cmd_data.cmd.jntPos[i] = jnt_pos_cmd_[i];
+                m_cmd_data.cmd.jntPos[i] = jnt_pos_cmd[i];
             } else
               RTT::log(RTT::Warning) << "Size of " << port_JointPositionCommand.getName()
                   << " not equal to " << LBR_MNJ << RTT::endlog();
@@ -273,12 +263,12 @@ private:
         //Valid ports only in joint impedance mode
         if (m_msr_data.robot.control == FRI_CTRL_JNT_IMP) {
           //Read desired additional joint torques
-          if (port_JointTorqueCommand.read(jnt_trq_cmd_)
+          if (port_JointTorqueCommand.read(jnt_trq_cmd)
               == RTT::NewData) {
             //Check size
-            if (jnt_trq_cmd_.size() == LBR_MNJ) {
+            if (jnt_trq_cmd.size() == LBR_MNJ) {
               for (unsigned int i = 0; i < LBR_MNJ; i++)
-                m_cmd_data.cmd.addJntTrq[i] = jnt_trq_cmd_[i];
+                m_cmd_data.cmd.addJntTrq[i] = jnt_trq_cmd[i];
             } else
               RTT::log(RTT::Warning) << "Size of " << port_JointTorqueCommand.getName()
                   << " not equal to " << LBR_MNJ << RTT::endlog();
@@ -294,7 +284,7 @@ private:
           }
         } else if (m_msr_data.robot.control == FRI_CTRL_CART_IMP) {
           if (port_CartesianPositionCommand.read(cart_pos_cmd) == RTT::NewData) {
-            KDL::Rotation rot = KDL::Rotation::Quaternion(
+            rot = KDL::Rotation::Quaternion(
                 cart_pos_cmd.orientation.x, cart_pos_cmd.orientation.y,
                 cart_pos_cmd.orientation.z, cart_pos_cmd.orientation.w);
             m_cmd_data.cmd.cartPos[0] = rot.data[0];
@@ -344,16 +334,16 @@ private:
       port_RobotState.write(m_msr_data.robot);
       port_FRIState.write(m_msr_data.intf);
 
-      port_JointPosition.write(jnt_pos_);
-      port_JointVelocity.write(jnt_vel_);
-      port_JointTorque.write(jnt_trq_);
-      port_GravityTorque.write(grav_trq_);
+      port_JointPosition.write(jnt_pos);
+      port_JointVelocity.write(jnt_vel);
+      port_JointTorque.write(jnt_trq);
+      port_GravityTorque.write(grav_trq);
 
       port_CartesianPosition.write(cart_pos);
       port_CartesianVelocity.write(cart_twist);
       port_CartesianWrench.write(cart_wrench);
 
-      port_Jacobian.write(jac_);
+      port_Jacobian.write(jac);
       port_MassMatrix.write(mass);
 
       fri_send();
@@ -378,7 +368,7 @@ private:
   RTT::OutputPort<Eigen::VectorXd > port_JointVelocity;
   RTT::OutputPort<geometry_msgs::Twist > port_CartesianVelocity;
   RTT::OutputPort<geometry_msgs::Pose > port_CartesianPosition;
-  RTT::OutputPort<Matrix77d > port_MassMatrix;
+  RTT::OutputPort<Eigen::MatrixXd > port_MassMatrix;
   RTT::OutputPort<KDL::Jacobian > port_Jacobian;
   RTT::OutputPort<Eigen::VectorXd > port_JointTorque;
   RTT::OutputPort<Eigen::VectorXd > port_GravityTorque;
@@ -388,17 +378,27 @@ private:
   std::vector<double> prop_joint_offset;
 
   // Start of user code userData
-  Eigen::VectorXd jnt_pos_;
-  Eigen::VectorXd jnt_pos_old_;
-  Eigen::VectorXd jnt_trq_;
-  Eigen::VectorXd grav_trq_;
-  Eigen::VectorXd jnt_vel_;
+  Eigen::VectorXd jnt_pos;
+  Eigen::VectorXd jnt_pos_old;
+  Eigen::VectorXd jnt_trq;
+  Eigen::VectorXd grav_trq;
+  Eigen::VectorXd jnt_vel;
 
-  Eigen::VectorXd jnt_pos_cmd_;
-  Eigen::VectorXd jnt_trq_cmd_;
+  Eigen::VectorXd jnt_pos_cmd;
+  Eigen::VectorXd jnt_trq_cmd;
 
-  KDL::Jacobian jac_;
-
+  geometry_msgs::Pose cart_pos, cart_pos_cmd;
+  geometry_msgs::Wrench cart_wrench, cart_wrench_cmd;
+  geometry_msgs::Twist cart_twist;
+  Eigen::MatrixXd mass;
+  lwr_fri::FriJointImpedance jnt_imp_cmd;
+  lwr_fri::CartesianImpedance cart_imp_cmd;
+  KDL::Frame cartPos;
+  KDL::Rotation rot;
+  KDL::Frame baseFrame;
+  std_msgs::Int32 x;
+  KDL::Jacobian jac;
+  KDL::Twist v;
   KDL::Frame T_old;
 
   int m_socket, m_remote_port, m_control_mode;
