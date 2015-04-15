@@ -5,16 +5,41 @@ This package implements two orocos components for communicating with the Kuka LW
 
 You can compile it for gnulinux or xenomai+rtnet targets if you want 1Khz hard-realtime communication.
 
-### Install with Catkin
+### Usage (ops script)
 
-```bash
-cd ~/catkin_ws
-git clone https://https://github.com/ahoarau/lwr_hardware.git
-catkin_make
-source devel/setup.sh
+```
+import("rtt_ros")
+ros.import("lwr_fri")
+loadComponent("lwr","lwr_fri::FRIComponent")
+setActivity("lwr",0.001,99,ORO_SCHED_RT)
+lwr.configure()
+lwr.start()
 ```
 
-> Note: If you don't want to use catkin, you can also compile it as an independant orocos package.
+### Ports available
+
+#### Commands
+* **CartesianImpedanceCommand** (InputPort, lwr_fri::CartesianImpedance)
+* **CartesianWrenchCommand** (InputPort, geometry_msgs::Wrench)
+* **CartesianPositionCommand** (InputPort, geometry_msgs::Pose)
+* **JointImpedanceCommand** (InputPort, lwr_fri::FriJointImpedance)
+* **JointPositionCommand** (InputPort, Eigen::VectorXd)
+* **JointTorqueCommand** (InputPort, Eigen::VectorXd)
+
+#### Status
+* **CartesianWrench** (OutputPort, geometry_msgs::Wrench)
+* **JointVelocity** (OutputPort, Eigen::VectorXd)
+* **CartesianVelocity** (OutputPort, geometry_msgs::Twist)
+* **CartesianPosition** (OutputPort, geometry_msgs::Pose)
+* **MassMatrix** (OutputPort, Eigen::MatrixXd)
+* **Jacobian** (OutputPort, KDL::Jacobian)
+* **JointTorque** (OutputPort, Eigen::VectorXd)
+* **GravityTorque** (OutputPort, Eigen::VectorXd)
+* **JointPosition** (OutputPort, Eigen::VectorXd)
+#### Others
+* **KRL_CMD** (InputPort, std_msgs::Int32)
+* **RobotState** (OutputPort, tFriRobotState)
+* **FRIState** (OutputPort, tFriIntfState)
 
 ### Use it in other packages
 
