@@ -48,9 +48,11 @@ diagnostics.start()
 * **JointPosition** (OutputPort, Eigen::VectorXd)
 
 #### Others
-* **KRL_CMD** (InputPort, std_msgs::Int32)
+* **toKRL** (InputPort, tFriKrlData)
+* **fromKRL** (OutputPort, tFriKrlData)
 * **RobotState** (OutputPort, tFriRobotState)
 * **FRIState** (OutputPort, tFriIntfState)
+
 
 ### Use it in other packages
 
