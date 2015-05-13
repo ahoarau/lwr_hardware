@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>lwr_hardware</name>
+  <version>1.0.0</version>
+  <description>The lwr_hardware package to communite with the Kuka LWR 4</description>
+
+  <maintainer email="hoarau.robotics@gmail.com">Antoine Hoarau</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>kuka_lwr_fri</run_depend>
+  <run_depend>lwr_fri</run_depend>
+
+  <export>
+  </export>
+</package>
