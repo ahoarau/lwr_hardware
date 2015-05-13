@@ -47,21 +47,24 @@
 
 class FRIComponent : public RTT::TaskContext {
 public:
-  FRIComponent(const std::string & name) : TaskContext(name), prop_joint_offset(7, 0.0) {
+  FRIComponent(const std::string & name) : TaskContext(name),robot_name(name),n_joints(LBR_MNJ), prop_joint_offset(LBR_MNJ, 0.0) {
 
     prop_fri_port = 49938;
-	
+    
     this->addProperty("fri_port", prop_fri_port);
     this->addProperty("joint_offset", prop_joint_offset);
-
+    this->addProperty("robot_name",robot_name);
+    this->addProperty("n_joints",n_joints);
+    
     this->ports()->addPort("CartesianImpedanceCommand", port_CartesianImpedanceCommand).doc("");
     this->ports()->addPort("CartesianWrenchCommand", port_CartesianWrenchCommand).doc("");
     this->ports()->addPort("CartesianPositionCommand", port_CartesianPositionCommand).doc("");
     this->ports()->addPort("JointImpedanceCommand", port_JointImpedanceCommand).doc("");
     this->ports()->addPort("JointPositionCommand", port_JointPositionCommand).doc("");
     this->ports()->addPort("JointTorqueCommand", port_JointTorqueCommand).doc("");
-    this->ports()->addPort("KRL_CMD", port_KRL_CMD).doc("");
-
+    this->ports()->addPort("toKRL",port_ToKRL).doc("");
+    //this->ports()->addPort("KRL_CMD", port_KRL_CMD).doc("");
+    this->ports()->addPort("fromKRL",port_FromKRL).doc("");
     this->ports()->addPort("CartesianWrench", port_CartesianWrench).doc("");
     this->ports()->addPort("RobotState", port_RobotState).doc("");
     this->ports()->addPort("FRIState", port_FRIState).doc("");
@@ -71,8 +74,10 @@ public:
     this->ports()->addPort("MassMatrix", port_MassMatrix).doc("");
     this->ports()->addPort("Jacobian", port_Jacobian).doc("");
     this->ports()->addPort("JointTorque", port_JointTorque).doc("");
+    this->ports()->addPort("JointTorqueRaw", port_JointTorqueAct).doc("");
     this->ports()->addPort("GravityTorque", port_GravityTorque);
     this->ports()->addPort("JointPosition", port_JointPosition).doc("");
+    this->ports()->addPort("JointPositionFRIOffset", port_JointPositionFRIOffset).doc("");
   }
 
   ~FRIComponent(){
@@ -81,9 +86,11 @@ public:
   bool configureHook() {
     // Start of user code configureHook
     jnt_pos.resize(LBR_MNJ);
+    jnt_pos_fri_off.resize(LBR_MNJ);
     jnt_pos_old.resize(LBR_MNJ);
     jnt_vel.resize(LBR_MNJ);
     jnt_trq.resize(LBR_MNJ);
+    jnt_trq_act.resize(LBR_MNJ);
     grav_trq.resize(LBR_MNJ);
     jnt_pos_cmd.resize(LBR_MNJ);
     jnt_trq_cmd.resize(LBR_MNJ);
@@ -91,8 +98,10 @@ public:
     mass.resize(LBR_MNJ,LBR_MNJ);
 
     port_JointPosition.setDataSample(jnt_pos);
+    port_JointPositionFRIOffset.setDataSample(jnt_pos_fri_off);
     port_JointVelocity.setDataSample(jnt_vel);
     port_JointTorque.setDataSample(jnt_trq);
+    port_JointTorqueAct.setDataSample(jnt_trq_act);
     port_GravityTorque.setDataSample(grav_trq);
     port_Jacobian.setDataSample(jac);
     port_MassMatrix.setDataSample(mass);
@@ -141,6 +150,8 @@ private:
       for (unsigned int i = 0; i < LBR_MNJ; i++) {
         grav_trq[i] = m_msr_data.data.gravity[i];
         jnt_trq[i] = m_msr_data.data.estExtJntTrq[i];
+        jnt_trq_act[i] = m_msr_data.data.msrJntTrq[i];
+        jnt_pos_fri_off[i] = m_msr_data.data.cmdJntPosFriOffset[i];
         jnt_pos[i] = m_msr_data.data.msrJntPos[i] + prop_joint_offset[i];
         jnt_vel[i] = (jnt_pos[i] - jnt_pos_old[i]) / m_msr_data.intf.desiredMsrSampleTime;
         jnt_pos_old[i] = jnt_pos[i];
@@ -188,7 +199,7 @@ private:
       m_cmd_data.head.sendSeqCount = ++counter;
       m_cmd_data.head.reflSeqCount = m_msr_data.head.sendSeqCount;
 
-      //Process KRL CMD
+      /*//Process KRL CMD
 
       if (!(m_msr_data.krl.boolData & (1 << 0))) {
         if (port_KRL_CMD.read(x) == RTT::NewData) {
@@ -197,8 +208,23 @@ private:
         }
       } else {
         m_cmd_data.krl.boolData &= ~(1 << 0);
+      }*/
+      //legacy//m_fromKRL = m_msr_data.krl;
+      if (!(m_msr_data.krl.boolData & (1 << 0))) {
+        if (port_ToKRL.read(m_toKRL) == RTT::NewData) {
+          for(unsigned int i=0 ; i < FRI_USER_SIZE ; ++i)
+          {
+                m_cmd_data.krl.intData[i] = m_toKRL.intData[i];
+                m_cmd_data.krl.realData[i] = m_toKRL.realData[i];
+          }
+          m_cmd_data.krl.boolData |= (1 << 0);
+        }
+      } else {
+        m_cmd_data.krl.boolData &= ~(1 << 0);
       }
-
+      for(unsigned i = 0;i< FRI_USER_SIZE ; ++i)
+          RTT::log(RTT::Debug) << " "<<i<<" : "<<m_cmd_data.krl.intData[i];
+      RTT::log(RTT::Debug) << RTT::endlog();
       if (!isPowerOn()) {
         // necessary to write cmd if not powered on. See kuka FRI user manual p6 and friremote.cpp:
         for (int i = 0; i < LBR_MNJ; i++) {
@@ -338,8 +364,10 @@ private:
       port_FRIState.write(m_msr_data.intf);
 
       port_JointPosition.write(jnt_pos);
+      port_JointPositionFRIOffset.write(jnt_pos_fri_off);
       port_JointVelocity.write(jnt_vel);
       port_JointTorque.write(jnt_trq);
+      port_JointTorqueAct.write(jnt_trq_act);
       port_GravityTorque.write(grav_trq);
 
       port_CartesianPosition.write(cart_pos);
@@ -348,7 +376,9 @@ private:
 
       port_Jacobian.write(jac);
       port_MassMatrix.write(mass);
-
+        
+      port_FromKRL.write(m_msr_data.krl);
+      
       fri_send();
     }
 
@@ -363,8 +393,10 @@ private:
   RTT::InputPort<lwr_fri::FriJointImpedance > port_JointImpedanceCommand;
   RTT::InputPort<Eigen::VectorXd > port_JointPositionCommand;
   RTT::InputPort<Eigen::VectorXd > port_JointTorqueCommand;
-  RTT::InputPort<std_msgs::Int32 > port_KRL_CMD;
-
+  RTT::InputPort<tFriKrlData > port_ToKRL;
+  //RTT::InputPort<std_msgs::Int32 > port_KRL_CMD;
+  
+  RTT::OutputPort<tFriKrlData > port_FromKRL;
   RTT::OutputPort<geometry_msgs::Wrench > port_CartesianWrench;
   RTT::OutputPort<tFriRobotState > port_RobotState;
   RTT::OutputPort<tFriIntfState > port_FRIState;
@@ -374,16 +406,22 @@ private:
   RTT::OutputPort<Eigen::MatrixXd > port_MassMatrix;
   RTT::OutputPort<KDL::Jacobian > port_Jacobian;
   RTT::OutputPort<Eigen::VectorXd > port_JointTorque;
+  RTT::OutputPort<Eigen::VectorXd > port_JointTorqueAct;
   RTT::OutputPort<Eigen::VectorXd > port_GravityTorque;
   RTT::OutputPort<Eigen::VectorXd > port_JointPosition;
+  RTT::OutputPort<Eigen::VectorXd > port_JointPositionFRIOffset;
 
   int prop_fri_port;
+  std::string robot_name;
+  unsigned int n_joints;
   std::vector<double> prop_joint_offset;
 
   // Start of user code userData
   Eigen::VectorXd jnt_pos;
+  Eigen::VectorXd jnt_pos_fri_off;
   Eigen::VectorXd jnt_pos_old;
   Eigen::VectorXd jnt_trq;
+  Eigen::VectorXd jnt_trq_act;
   Eigen::VectorXd grav_trq;
   Eigen::VectorXd jnt_vel;
 
@@ -414,7 +452,9 @@ private:
 
   tFriMsrData m_msr_data;
   tFriCmdData m_cmd_data;
-
+  tFriKrlData m_fromKRL;
+  tFriKrlData m_toKRL;
+  
   int fri_recv() {
     int n = rt_dev_recvfrom(m_socket, (void*) &m_msr_data, sizeof(m_msr_data),
         0, (sockaddr*) &m_remote_addr, &m_sock_addr_len);
