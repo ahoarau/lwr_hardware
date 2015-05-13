@@ -1,0 +1,17 @@
+import("rtt_ros")
+ros.import("lwr_fri")
+ros.import("rtt_rosparam")
+
+loadComponent("lwr","FRIComponent")
+setActivity("lwr",0.001,90,ORO_SCHED_RT)
+
+
+stream("lwr.CartesianWrench",ros.comm.topic("/lwr/cartesian_wrench"))
+
+lwr.loadService("rosparam")
+lwr.rosparam.setParam("lwr/robot_name","robot_name")
+lwr.rosparam.setParam("lwr/n_joints","n_joints")
+
+lwr.configure()
+lwr.start()
+
