@@ -46,6 +46,8 @@ diagnostics.start()
 * **JointTorque** (OutputPort, Eigen::VectorXd)
 * **GravityTorque** (OutputPort, Eigen::VectorXd)
 * **JointPosition** (OutputPort, Eigen::VectorXd)
+* **JointTorqueRaw** (OutputPort, Eigen::VectorXd)
+* **JointPositionFRIOffset** (OutputPort, Eigen::VectorXd)
 
 #### Others
 * **toKRL** (InputPort, tFriKrlData)
