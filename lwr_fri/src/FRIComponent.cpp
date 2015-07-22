@@ -467,10 +467,11 @@ private:
   }
 
   int fri_send() {
-    if (0
-        > rt_dev_sendto(m_socket, (void*) &m_cmd_data, sizeof(m_cmd_data), 0,
-            (sockaddr*) &m_remote_addr, m_sock_addr_len)) {
-      RTT::log(RTT::Error) << "Sending datagram failed."
+    int ret = rt_dev_sendto(m_socket, (void*) &m_cmd_data, sizeof(m_cmd_data), 0,
+            (sockaddr*) &m_remote_addr, m_sock_addr_len);
+    if(ret <=0)
+    {
+      RTT::log(RTT::Error) << "Sending datagram failed. (ret="<<ret<<")"
           << ntohs(m_remote_addr.sin_port) << RTT::endlog();
       return -1;
     }
