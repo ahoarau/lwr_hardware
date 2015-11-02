@@ -3,8 +3,13 @@ ros.import("rtt_rospack")
 ros.import("rtt_roscomm")
 runScript(ros.find("lwr_fri")+"/runfri.ops")
 loadComponent("lwr_diag","FRIDiagnostics")
-setActivity("lwr_diag",0.1,10,ORO_SCHED_RT)
+setActivity("lwr_diag",0.01,10,ORO_SCHED_OTHER)
 connectPeers("lwr_diag","lwr")
+
+
+connect("lwr.FRIState","lwr_diag.FRIState",ConnPolicy())
+
+connect("lwr.RobotState","lwr_diag.RobotState",ConnPolicy())
 
 stream("lwr_diag.Diagnostics",ros.comm.topic("diagnostics_agg"))
 lwr_diag.configure()
