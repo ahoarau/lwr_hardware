@@ -17,24 +17,18 @@ find_package(orocos_kdl REQUIRED)
 
 if(${OROCOS_TARGET} STREQUAL "xenomai" )
   find_package(Xenomai REQUIRED)
-  add_definitions(-DHAVE_RTNET)
-  add_definitions(-DXENOMAI)
+  set_property(DIRECTORY ${PROJECT_SOURCE_DIR} APPEND PROPERTY COMPILE_DEFINITIONS HAVE_RTNET XENOMAI)
 endif()
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 link_directories(${orocos_kdl_LIBRARY_DIRS})
 
 orocos_component(fricomponent src/FRIComponent.cpp)
-if(${OROCOS_TARGET} STREQUAL "xenomai" )
-  target_link_libraries(fricomponent ${orocos_kdl_LIBRARIES} ${kdl_conversions_LIBRARIES} ${Xenomai_RTDM_LIBRARIES})
-else()
-  target_link_libraries(fricomponent ${orocos_kdl_LIBRARIES} ${kdl_conversions_LIBRARIES})
-endif()
+target_link_libraries(fricomponent ${orocos_kdl_LIBRARIES} ${kdl_conversions_LIBRARIES} ${Xenomai_RTDM_LIBRARIES})
 add_dependencies(fricomponent ${PROJECT_NAME}_gencpp)
 
 orocos_component(fridiagnostics src/FRIDiagnostics.cpp)
 add_dependencies(fridiagnostics ${PROJECT_NAME}_gencpp)
-
 
 orocos_generate_package()
 

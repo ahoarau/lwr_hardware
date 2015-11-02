@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(kuka_lwr_fri)
 
 find_package(catkin REQUIRED)
-
+add_subdirectory(include/kuka_lwr_fri)
 catkin_package(
   INCLUDE_DIRS include
 )
@@ -23,4 +23,3 @@ include_directories(
 install(DIRECTORY include/${PROJECT_NAME}/
    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
-
