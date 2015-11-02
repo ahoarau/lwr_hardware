@@ -7,8 +7,8 @@
   <license>prop</license>
   <author email="ruben.smits@mech.kuleuven.be">Ruben Smits</author>
   <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
-  
+
   <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>orogen</buildtool_depend>
 
 </package>
-

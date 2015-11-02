@@ -1,5 +1,5 @@
 find_package(Orocos-RTT REQUIRED ${RTT_HINTS})
 include(${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake)
+orocos_use_package(orogen)
 #orocos_typegen_headers(--notransports=corba,typelib,mqueue ${CMAKE_CURRENT_SOURCE_DIR}/include/kuka_lwr_fri/friComm.h)
 orocos_typegen_headers(friComm.h)
-
