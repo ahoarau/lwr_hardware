@@ -3,7 +3,7 @@ project(kuka_lwr_fri)
 
 find_package(catkin REQUIRED)
 # Commenting for travis
-#add_subdirectory(include/kuka_lwr_fri)
+add_subdirectory(include/kuka_lwr_fri)
 catkin_package(
   INCLUDE_DIRS include
 )
