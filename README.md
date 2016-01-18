@@ -11,7 +11,8 @@ You can compile it for gnulinux or xenomai+rtnet targets if you want 1Khz hard-r
 import("rtt_ros")
 ros.import("lwr_fri")
 loadComponent("lwr","lwr_fri::FRIComponent")
-setActivity("lwr",0.001,99,ORO_SCHED_RT)
+setActivity("lwr",0,99,ORO_SCHED_RT)
+# Period is zero because the components does a blocking wait on the network = it goes as fast as the FRISTART() 
 lwr.configure()
 lwr.start()
 ```
@@ -20,7 +21,7 @@ lwr.start()
 import("rtt_ros")
 ros.import("lwr_fri")
 loadComponent("diagnostics","FRIDiagnostics")
-setActivity("diagnostics",0.001,99,ORO_SCHED_RT)
+setActivity("diagnostics",0.02,99,ORO_SCHED_OTHER)
 // We suppose lwr is launched already
 connect("lwr","diagnostics")
 diagnostics.configure()
