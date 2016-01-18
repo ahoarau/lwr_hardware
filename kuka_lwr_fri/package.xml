@@ -9,8 +9,8 @@
   <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>orogen</buildtool_depend>
-  <buildtool_depend>metaruby</buildtool_depend>
-  <buildtool_depend>typegen</buildtool_depend>
+  <build_depend>orogen</build_depend>
+  <build_depend>metaruby</build_depend>
+  <build_depend>typegen</build_depend>
   
 </package>
