@@ -12,5 +12,5 @@
   <build_depend>orogen</build_depend>
   <build_depend>metaruby</build_depend>
   <build_depend>typegen</build_depend>
-  
+  <build_depend>typelib</build_depend>
 </package>
