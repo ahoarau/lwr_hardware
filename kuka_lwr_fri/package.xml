@@ -10,7 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>orogen</build_depend>
-  <build_depend>orocos-toolchain</build_depend>
+  <build_depend>orocos_toolchain</build_depend>
   <!--build_depend>typegen</build_depend-->
   <!--build_depend>typelib</build_depend-->
 </package>
