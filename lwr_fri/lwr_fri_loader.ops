@@ -1,0 +1,13 @@
+import("rtt_ros")
+ros.import("rtt_lwr_abstract")
+ros.import("lwr_fri")
+ros.import("rtt_lwr_abstract")
+ros.import("lwr_fri")
+this.require("ros_helper")
+
+var string robot_name = ros_helper.getRobotName()
+
+loadComponent(robot_name,"FRIComponent")
+setActivity(robot_name,0,90,ORO_SCHED_RT)
+
+configureComponent(robot_name)

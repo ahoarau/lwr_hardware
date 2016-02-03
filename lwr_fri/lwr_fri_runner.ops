@@ -1,0 +1,5 @@
+import("rtt_ros")
+ros.import("rtt_rospack")
+
+runScript(ros.find("lwr_fri")+"/lwr_fri_loader.ops")
+startComponent(robot_name)
