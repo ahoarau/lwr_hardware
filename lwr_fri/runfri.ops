@@ -2,12 +2,9 @@ import("rtt_ros")
 ros.import("lwr_fri")
 ros.import("rtt_rosparam")
 ros.import("kuka_lwr_fri")
-ros.import("lwr_fri")
-this.require("ros_helper")
 
-var string robot_name = ros_helper.getRobotName()
+loadComponent("lwr","FRIComponent")
+setActivity("lwr",0,90,ORO_SCHED_RT)
 
-loadComponent(robot_name,"FRIComponent")
-setActivity(robot_name,0,90,ORO_SCHED_RT)
-
-configureComponent(robot_name)
+configureComponent("lwr")
+startComponent("lwr")
