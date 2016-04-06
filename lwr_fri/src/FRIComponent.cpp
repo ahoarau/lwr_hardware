@@ -50,12 +50,12 @@ public:
   FRIComponent(const std::string & name) : TaskContext(name),robot_name(name),n_joints(LBR_MNJ), prop_joint_offset(LBR_MNJ, 0.0) {
 
     prop_fri_port = 49938;
-    
+
     this->addProperty("fri_port", prop_fri_port);
     this->addProperty("joint_offset", prop_joint_offset);
     this->addProperty("robot_name",robot_name);
     this->addProperty("n_joints",n_joints);
-    
+
     this->ports()->addPort("CartesianImpedanceCommand", port_CartesianImpedanceCommand).doc("");
     this->ports()->addPort("CartesianWrenchCommand", port_CartesianWrenchCommand).doc("");
     this->ports()->addPort("CartesianPositionCommand", port_CartesianPositionCommand).doc("");
@@ -74,7 +74,7 @@ public:
     this->ports()->addPort("MassMatrix", port_MassMatrix).doc("");
     this->ports()->addPort("Jacobian", port_Jacobian).doc("");
     this->ports()->addPort("JointTorque", port_JointTorque).doc("");
-    this->ports()->addPort("JointTorqueRaw", port_JointTorqueAct).doc("");
+    this->ports()->addPort("JointTorqueAct", port_JointTorqueAct).doc("");
     this->ports()->addPort("GravityTorque", port_GravityTorque);
     this->ports()->addPort("JointPosition", port_JointPosition).doc("");
     this->ports()->addPort("JointPositionFRIOffset", port_JointPositionFRIOffset).doc("");
@@ -85,17 +85,18 @@ public:
 
   bool configureHook() {
     // Start of user code configureHook
-    jnt_pos.resize(LBR_MNJ);
-    jnt_pos_fri_off.resize(LBR_MNJ);
-    jnt_pos_old.resize(LBR_MNJ);
-    jnt_vel.resize(LBR_MNJ);
-    jnt_trq.resize(LBR_MNJ);
-    jnt_trq_act.resize(LBR_MNJ);
-    grav_trq.resize(LBR_MNJ);
-    jnt_pos_cmd.resize(LBR_MNJ);
-    jnt_trq_cmd.resize(LBR_MNJ);
+    jnt_pos.setZero(LBR_MNJ);
+    jnt_pos_fri_off.setZero(LBR_MNJ);
+    jnt_pos_old.setZero(LBR_MNJ);
+    jnt_vel.setZero(LBR_MNJ);
+    jnt_trq.setZero(LBR_MNJ);
+    jnt_trq_act.setZero(LBR_MNJ);
+    grav_trq.setZero(LBR_MNJ);
+    jnt_pos_cmd.setZero(LBR_MNJ);
+    jnt_trq_cmd.setZero(LBR_MNJ);
     jac.resize(LBR_MNJ);
-    mass.resize(LBR_MNJ,LBR_MNJ);
+    SetToZero(jac);
+    mass.setZero(LBR_MNJ,LBR_MNJ);
 
     port_JointPosition.setDataSample(jnt_pos);
     port_JointPositionFRIOffset.setDataSample(jnt_pos_fri_off);
@@ -222,9 +223,7 @@ private:
       } else {
         m_cmd_data.krl.boolData &= ~(1 << 0);
       }
-      for(unsigned i = 0;i< FRI_USER_SIZE ; ++i)
-          RTT::log(RTT::Debug) << " "<<i<<" : "<<m_cmd_data.krl.intData[i];
-      RTT::log(RTT::Debug) << RTT::endlog();
+
       if (!isPowerOn()) {
         // necessary to write cmd if not powered on. See kuka FRI user manual p6 and friremote.cpp:
         for (int i = 0; i < LBR_MNJ; i++) {
@@ -376,10 +375,11 @@ private:
 
       port_Jacobian.write(jac);
       port_MassMatrix.write(mass);
-        
+
       port_FromKRL.write(m_msr_data.krl);
-      
-      fri_send();
+
+      if(fri_send() != 0)
+        this->error();
     }
 
     this->trigger();
@@ -395,7 +395,7 @@ private:
   RTT::InputPort<Eigen::VectorXd > port_JointTorqueCommand;
   RTT::InputPort<tFriKrlData > port_ToKRL;
   //RTT::InputPort<std_msgs::Int32 > port_KRL_CMD;
-  
+
   RTT::OutputPort<tFriKrlData > port_FromKRL;
   RTT::OutputPort<geometry_msgs::Wrench > port_CartesianWrench;
   RTT::OutputPort<tFriRobotState > port_RobotState;
@@ -454,7 +454,7 @@ private:
   tFriCmdData m_cmd_data;
   tFriKrlData m_fromKRL;
   tFriKrlData m_toKRL;
-  
+
   int fri_recv() {
     int n = rt_dev_recvfrom(m_socket, (void*) &m_msr_data, sizeof(m_msr_data),
         0, (sockaddr*) &m_remote_addr, &m_sock_addr_len);
@@ -505,4 +505,3 @@ private:
 };
 
 ORO_CREATE_COMPONENT(FRIComponent)
-
