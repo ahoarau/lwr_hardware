@@ -1,6 +1,6 @@
 import("rtt_ros")
 ros.import("rtt_rospack")
-runScript(ros.find("lwr_launch")+"/scripts/lwr_loader.ops")
+runScript(ros.find("lwr_utils")+"/scripts/utils.ops")
 ros.import("lwr_fri")
 
 loadService("Deployer","ros_helper")
