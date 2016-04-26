@@ -3,7 +3,13 @@ project(kuka_lwr_fri)
 
 find_package(catkin REQUIRED)
 # Commenting for travis
-add_subdirectory(include/kuka_lwr_fri)
+
+option(BUILD_LWR_FRI_TYPEKITS "Build extra fri typekits" OFF)
+
+if(${BUILD_LWR_FRI_TYPEKITS})
+  add_subdirectory(include/kuka_lwr_fri)
+endif()
+
 catkin_package(
   INCLUDE_DIRS include
 )
