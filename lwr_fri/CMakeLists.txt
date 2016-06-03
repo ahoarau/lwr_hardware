@@ -20,10 +20,12 @@ catkin_package(
   CATKIN_DEPENDS roscpp diagnostic_msgs geometry_msgs std_msgs message_runtime
 )
 
-find_package(OROCOS-RTT REQUIRED ${RTT_HINTS} rtt-transport-mqueue rtt-transport-corba)
+find_package(OROCOS-RTT REQUIRED ${RTT_HINTS})
 find_package(Eigen REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
+orocos_use_package(rtt-transport-corba)
+orocos_use_package(rtt-transport-mqueue)
 
 ros_generate_rtt_typekit(lwr_fri)
 
