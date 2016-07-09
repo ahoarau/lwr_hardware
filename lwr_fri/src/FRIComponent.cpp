@@ -251,7 +251,7 @@ private:
           m_cmd_data.cmd.cmdFlags |= FRI_CMD_JNTSTIFF | FRI_CMD_JNTDAMP;
           for (unsigned int i = 0; i < LBR_MNJ; i++) {
             m_cmd_data.cmd.addJntTrq[i] = 0.0;
-            m_cmd_data.cmd.jntStiffness[i] = 0;
+            m_cmd_data.cmd.jntStiffness[i] = 1000;
             m_cmd_data.cmd.jntDamping[i] = 0.7;
           }
         }
@@ -264,10 +264,10 @@ private:
             m_cmd_data.cmd.addTcpFT[i] = 0.0;
           for (unsigned int i = 0; i < FRI_CART_VEC / 2; i++) {
             //Linear part;
-            m_cmd_data.cmd.cartStiffness[i] = 0;
+            m_cmd_data.cmd.cartStiffness[i] = 2000;
             m_cmd_data.cmd.cartDamping[i] = 0.7;
             //rotational part;
-            m_cmd_data.cmd.cartStiffness[i + FRI_CART_VEC / 2] = 0;
+            m_cmd_data.cmd.cartStiffness[i + FRI_CART_VEC / 2] = 200;
             m_cmd_data.cmd.cartDamping[i + FRI_CART_VEC / 2] = 0.7;
           }
         }
