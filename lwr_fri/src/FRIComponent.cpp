@@ -200,28 +200,15 @@ private:
       m_cmd_data.head.sendSeqCount = ++counter;
       m_cmd_data.head.reflSeqCount = m_msr_data.head.sendSeqCount;
 
-      /*//Process KRL CMD
+      //Process KRL CMD
+      if (port_ToKRL.read(m_toKRL) != RTT::NoData) {         
+        for(int i=0 ; i < FRI_USER_SIZE ; ++i)
+        {
+            m_cmd_data.krl.intData[i] = m_toKRL.intData[i];
+            m_cmd_data.krl.realData[i] = m_toKRL.realData[i];
+        }
 
-      if (!(m_msr_data.krl.boolData & (1 << 0))) {
-        if (port_KRL_CMD.read(x) == RTT::NewData) {
-          m_cmd_data.krl.intData[0] = x.data;
-          m_cmd_data.krl.boolData |= (1 << 0);
-        }
-      } else {
-        m_cmd_data.krl.boolData &= ~(1 << 0);
-      }*/
-      //legacy//m_fromKRL = m_msr_data.krl;
-      if (!(m_msr_data.krl.boolData & (1 << 0))) {
-        if (port_ToKRL.read(m_toKRL) == RTT::NewData) {
-          for(unsigned int i=0 ; i < FRI_USER_SIZE ; ++i)
-          {
-                m_cmd_data.krl.intData[i] = m_toKRL.intData[i];
-                m_cmd_data.krl.realData[i] = m_toKRL.realData[i];
-          }
-          m_cmd_data.krl.boolData |= (1 << 0);
-        }
-      } else {
-        m_cmd_data.krl.boolData &= ~(1 << 0);
+        m_cmd_data.krl.boolData = m_toKRL.boolData;
       }
 
       if (!isPowerOn()) {
