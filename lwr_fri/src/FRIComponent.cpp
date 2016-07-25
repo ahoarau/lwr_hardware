@@ -113,19 +113,13 @@ public:
     return true;
   }
 
-  bool startHook() {
-    // Start of user code startHook
-    // End of user code
-    return true;
+  void cleanupHook()
+  {
+    if (m_socket != 0)
+      rt_dev_close(m_socket);
   }
-
-  void stopHook() {
-    // Start of user code stopHook
-    // End of user code
-  }
-
   void updateHook() {
-    if( true) {
+    if( this->isRunning() ) {
       doComm();
     }
   }
@@ -201,7 +195,7 @@ private:
       m_cmd_data.head.reflSeqCount = m_msr_data.head.sendSeqCount;
 
       //Process KRL CMD
-      if (port_ToKRL.read(m_toKRL) != RTT::NoData) {         
+      if (port_ToKRL.read(m_toKRL) == RTT::NewData) {
         for(int i=0 ; i < FRI_USER_SIZE ; ++i)
         {
             m_cmd_data.krl.intData[i] = m_toKRL.intData[i];
