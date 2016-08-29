@@ -47,14 +47,12 @@
 
 class FRIComponent : public RTT::TaskContext {
 public:
-  FRIComponent(const std::string & name) : TaskContext(name),robot_name(name),n_joints(LBR_MNJ), prop_joint_offset(LBR_MNJ, 0.0) {
+  FRIComponent(const std::string & name) : TaskContext(name), prop_joint_offset(LBR_MNJ, 0.0) {
 
     prop_fri_port = 49938;
 
     this->addProperty("fri_port", prop_fri_port);
     this->addProperty("joint_offset", prop_joint_offset);
-    this->addProperty("robot_name",robot_name);
-    this->addProperty("n_joints",n_joints);
 
     this->ports()->addPort("CartesianImpedanceCommand", port_CartesianImpedanceCommand).doc("");
     this->ports()->addPort("CartesianWrenchCommand", port_CartesianWrenchCommand).doc("");
@@ -63,7 +61,6 @@ public:
     this->ports()->addPort("JointPositionCommand", port_JointPositionCommand).doc("");
     this->ports()->addPort("JointTorqueCommand", port_JointTorqueCommand).doc("");
     this->ports()->addPort("toKRL",port_ToKRL).doc("");
-    //this->ports()->addPort("KRL_CMD", port_KRL_CMD).doc("");
     this->ports()->addPort("fromKRL",port_FromKRL).doc("");
     this->ports()->addPort("CartesianWrench", port_CartesianWrench).doc("");
     this->ports()->addPort("RobotState", port_RobotState).doc("");
@@ -98,6 +95,13 @@ public:
     SetToZero(jac);
     mass.setZero(LBR_MNJ,LBR_MNJ);
 
+    for (size_t i = 0; i < FRI_USER_SIZE; i++) {
+        m_msr_data.krl.intData[i] = m_cmd_data.krl.intData[i] = 0;
+        m_msr_data.krl.realData[i] = m_cmd_data.krl.realData[i] = 0.0;
+    }
+    m_msr_data.krl.boolData = 0;
+    m_cmd_data.krl.boolData = 0;
+
     port_JointPosition.setDataSample(jnt_pos);
     port_JointPositionFRIOffset.setDataSample(jnt_pos_fri_off);
     port_JointVelocity.setDataSample(jnt_vel);
@@ -108,8 +112,11 @@ public:
     port_MassMatrix.setDataSample(mass);
 
     if (fri_create_socket() != 0)
-      return false;
-    // End of user code
+    {
+        RTT::log(RTT::Error) << "\n\n\n\x1B[31m Could not create socked,"
+        " please make sure you can ping the robot\n\n\n\x1B[0m" << RTT::endlog();
+        return false;
+    }
     return true;
   }
 
@@ -375,8 +382,6 @@ private:
   RTT::InputPort<Eigen::VectorXd > port_JointPositionCommand;
   RTT::InputPort<Eigen::VectorXd > port_JointTorqueCommand;
   RTT::InputPort<tFriKrlData > port_ToKRL;
-  //RTT::InputPort<std_msgs::Int32 > port_KRL_CMD;
-
   RTT::OutputPort<tFriKrlData > port_FromKRL;
   RTT::OutputPort<geometry_msgs::Wrench > port_CartesianWrench;
   RTT::OutputPort<tFriRobotState > port_RobotState;
@@ -393,8 +398,6 @@ private:
   RTT::OutputPort<Eigen::VectorXd > port_JointPositionFRIOffset;
 
   int prop_fri_port;
-  std::string robot_name;
-  unsigned int n_joints;
   std::vector<double> prop_joint_offset;
 
   // Start of user code userData
