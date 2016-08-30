@@ -130,7 +130,16 @@ public:
       doComm();
     }
   }
+  void stopHook() {
+      for(int i=0 ; i < FRI_USER_SIZE ; ++i)
+      {
+          m_cmd_data.krl.intData[i] = 0;
+          m_cmd_data.krl.realData[i] = 0;
+      }
 
+      m_cmd_data.krl.boolData = 0;
+      doComm();
+  }
 private:
 
   void doComm() {
