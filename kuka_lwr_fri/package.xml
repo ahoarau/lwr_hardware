@@ -9,6 +9,6 @@
   <maintainer email="konradb3@gmail.com">Konrad Banachowicz</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>orogen</build_depend>
+  <!--build_depend>orogen</build_depend-->
 
 </package>
