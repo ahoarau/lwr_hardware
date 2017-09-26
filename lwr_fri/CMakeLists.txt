@@ -16,12 +16,11 @@ add_message_files(DIRECTORY msg)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs)
 
 catkin_package(
-  DEPENDS rtt
   CATKIN_DEPENDS roscpp diagnostic_msgs geometry_msgs std_msgs message_runtime
 )
 
 find_package(OROCOS-RTT REQUIRED ${RTT_HINTS})
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
 orocos_use_package(rtt-transport-corba)
@@ -30,15 +29,21 @@ orocos_use_package(rtt-transport-mqueue)
 ros_generate_rtt_typekit(lwr_fri)
 
 if(${OROCOS_TARGET} STREQUAL "xenomai" )
+  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/config)
   find_package(Xenomai REQUIRED)
-  set_property(DIRECTORY ${PROJECT_SOURCE_DIR} APPEND PROPERTY COMPILE_DEFINITIONS HAVE_RTNET XENOMAI)
+  if(${XENOMAI_VERSION_MAJOR} EQUAL 3)
+     find_package(XenomaiPosix REQUIRED)
+  endif()
+  if(${XENOMAI_VERSION_MAJOR} EQUAL 2)
+     set_property(DIRECTORY ${PROJECT_SOURCE_DIR} APPEND PROPERTY COMPILE_DEFINITIONS HAVE_RTNET XENOMAI)
+  endif()
 endif()
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 link_directories(${orocos_kdl_LIBRARY_DIRS})
 
 orocos_component(fricomponent src/FRIComponent.cpp)
-target_link_libraries(fricomponent ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${kdl_conversions_LIBRARIES} ${Xenomai_RTDM_LIBRARIES})
+target_link_libraries(fricomponent ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${kdl_conversions_LIBRARIES} ${Xenomai_RTDM_LIBRARIES} ${XENOMAI_POSIX_LIBRAIRIES})
 add_dependencies(fricomponent ${PROJECT_NAME}_generate_messages_cpp)
 
 orocos_component(fridiagnostics src/FRIDiagnostics.cpp)
