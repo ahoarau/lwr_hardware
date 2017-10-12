@@ -30,18 +30,55 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 
-#ifndef HAVE_RTNET
 
-#define rt_dev_socket socket
-#define rt_dev_setsockopt setsockopt
-#define rt_dev_bind bind
-#define rt_dev_recvfrom recvfrom
-#define rt_dev_sendto sendto
-#define rt_dev_close close
+#ifndef XENOMAI_VERSION_MAJOR
+
+#include <sstream>
+#include <vector>
+#include <string>
+
+#define rt_dev_socket       socket
+#define rt_dev_setsockopt   setsockopt
+#define rt_dev_bind         bind
+#define rt_dev_recvfrom     recvfrom
+#define rt_dev_sendto       sendto
+#define rt_dev_close        close
+#define rt_dev_connect      connect
+#define rt_dev_recv         recv
+#define rt_dev_send         send
+#define RT_SO_TIMEOUT       SO_RCVTIMEO
 
 #else
-#include <rtdm/rtdm.h>
+
+// Xenomai 2 : give RTnet capabilities
+#if XENOMAI_VERSION_MAJOR == 2
+    #include <rtnet.h>
+    #include <rtdm/rtdm.h>
 #endif
+
+// Xenomai 3 : RTnet is included
+#if XENOMAI_VERSION_MAJOR == 3
+// This is included in the cobalt core
+// Putting it here as a reminder
+#include <sys/socket.h>
+
+#define rt_dev_socket       socket
+#define rt_dev_setsockopt   setsockopt
+#define rt_dev_bind         bind
+#define rt_dev_recvfrom     recvfrom
+#define rt_dev_sendto       sendto
+#define rt_dev_close        close
+#define rt_dev_connect      connect
+#define rt_dev_recv         recv
+#define rt_dev_send         send
+#define rt_dev_setsockopt   setsockopt
+#define RT_SO_TIMEOUT       SO_RCVTIMEO
+
+#endif
+
+
+#endif
+
 
 // End of user code
 
