@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(lwr_fri)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/config)
 
 find_package(catkin REQUIRED COMPONENTS
 	rtt_roscomm
-	kuka_lwr_fri 
-	diagnostic_msgs 
-	geometry_msgs 
-	std_msgs 
-	message_generation 
-	kdl_conversions 
+	kuka_lwr_fri
+	diagnostic_msgs
+	geometry_msgs
+	std_msgs
+	message_generation
+	kdl_conversions
 	cmake_modules
 	)
 
@@ -30,24 +31,23 @@ ros_generate_rtt_typekit(lwr_fri)
 
 orocos_component(fricomponent src/FRIComponent.cpp)
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/config)
 find_package(Xenomai QUIET)
 # Allows to build for Xenomai + RTnet
 if(XENOMAI_FOUND OR (DEFINED $ENV{OROCOS_TARGET} AND $ENV{OROCOS_TARGET} EQUAL "xenomai"))
 
     message("[${PROJECT_NAME}] Building lwr_fri for Xenomai ${XENOMAI_VERSION} + RTnet")
     message("[${PROJECT_NAME}] Compiling with ${XENOMAI_RTDM_LIBRARIES} and ${XENOMAI_RTDM_INCLUDE_DIRS} and ${XENOMAI_RTDM_CFLAGS}")
-        
+
     # In Xenomai 3 it contains RTnet
     include_directories(${XENOMAI_RTDM_INCLUDE_DIRS})
     add_definitions(${XENOMAI_RTDM_CFLAGS})
-            
+
     # In Xenomai 2 we need the external RTnet
     if(${XENOMAI_VERSION_MAJOR} EQUAL 2)
         find_package(RTnet REQUIRED)
         include_directories(${RTNET_INCLUDE_DIRS})
     endif()
-                    
+
     set_target_properties(fricomponent PROPERTIES COMPILE_FLAGS -DXENOMAI_VERSION_MAJOR=${XENOMAI_VERSION_MAJOR})
 else()
     message(WARNING "[${PROJECT_NAME}] Building lwr_fri WITHOUT Xenomai/RTnet support")
@@ -66,7 +66,7 @@ add_dependencies(fridiagnostics ${PROJECT_NAME}_generate_messages_cpp)
 
 orocos_generate_package(DEPENDS lwr_fri
           DEPENDS_TARGETS
-          rtt_roscomm  
+          rtt_roscomm
           rtt_std_msgs
           rtt_rosgraph_msgs
           rtt_geometry_msgs
