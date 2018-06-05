@@ -486,12 +486,23 @@ private:
   tFriKrlData m_toKRL;
 
   int fri_recv() {
+      std::cout << "aoisdhjaoisdjoaisdj" << '\n';
     int n = rt_dev_recvfrom(m_socket, (void*) &m_msr_data, sizeof(m_msr_data),
         0, (sockaddr*) &m_remote_addr, &m_sock_addr_len);
-    if (sizeof(tFriMsrData) != n) {
-      RTT::log(RTT::Error) << "bad packet length: " << n << ", expected: "
-          << sizeof(tFriMsrData) << RTT::endlog();
-      return -1;
+        std::cout << "asdpojasdj" << '\n';
+    if (sizeof(tFriMsrData) != n)
+    {
+        if(n == 0)
+        {
+            RTT::log(RTT::Error) << "\n\n\n\x1B[31m[" << getName() << "] No data received,"
+            " this usually happens when the FRI is not launched or another deployer is running in the background\n\n\n\x1B[0m" << RTT::endlog();
+        }
+        else
+        {
+            RTT::log(RTT::Error) << "\n\n\n\x1B[31m[" << getName() << "] Bad packet length (received " << n << ", expected " << sizeof(tFriMsrData) << ")\n\n\n\x1B[0m" << RTT::endlog();
+        }
+        this->error();
+        return -1;
     }
     return 0;
   }
@@ -501,9 +512,10 @@ private:
             (sockaddr*) &m_remote_addr, m_sock_addr_len);
     if(ret <=0)
     {
-      RTT::log(RTT::Error) << "Sending datagram failed. (ret="<<ret<<")"
-          << ntohs(m_remote_addr.sin_port) << RTT::endlog();
-      return -1;
+        RTT::log(RTT::Error) << "[" << getName() <<"] Sending datagram failed. (ret="<<ret<<")"
+            << ntohs(m_remote_addr.sin_port) << RTT::endlog();
+        this->error();
+        return -1;
     }
     return 0;
   }
