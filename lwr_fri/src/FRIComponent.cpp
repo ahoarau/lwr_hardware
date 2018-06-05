@@ -486,10 +486,8 @@ private:
   tFriKrlData m_toKRL;
 
   int fri_recv() {
-      std::cout << "aoisdhjaoisdjoaisdj" << '\n';
     int n = rt_dev_recvfrom(m_socket, (void*) &m_msr_data, sizeof(m_msr_data),
         0, (sockaddr*) &m_remote_addr, &m_sock_addr_len);
-        std::cout << "asdpojasdj" << '\n';
     if (sizeof(tFriMsrData) != n)
     {
         if(n == 0)
