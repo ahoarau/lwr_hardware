@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
 	kdl_conversions
 	cmake_modules
-	)
+)
 
 add_message_files(DIRECTORY msg)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs)
@@ -33,7 +33,7 @@ orocos_component(fricomponent src/FRIComponent.cpp)
 
 find_package(Xenomai QUIET)
 # Allows to build for Xenomai + RTnet
-if(XENOMAI_FOUND OR (DEFINED $ENV{OROCOS_TARGET} AND $ENV{OROCOS_TARGET} EQUAL "xenomai"))
+if(XENOMAI_FOUND OR (DEFINED ENV{OROCOS_TARGET} AND $ENV{OROCOS_TARGET} MATCHES "xenomai"))
 
     message("[${PROJECT_NAME}] Building lwr_fri for Xenomai ${XENOMAI_VERSION} + RTnet")
     message("[${PROJECT_NAME}] Compiling with ${XENOMAI_RTDM_LIBRARIES} and ${XENOMAI_RTDM_INCLUDE_DIRS} and ${XENOMAI_RTDM_CFLAGS}")
